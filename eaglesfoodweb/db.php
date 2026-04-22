@@ -1,13 +1,4 @@
 <?php
-$localhost = 'localhost';
-$username  = 'root';
-$password  = '';
-$db_name   = 'eagles_food';
-
-$conn = new mysqli($localhost, $username, $password, $db_name);
-
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+$conn = new mysqli('localhost', 'u384833177_eagles_food', 'Eaglesfood@1963', 'u384833177_eagles_food');
+if ($conn->connect_error) { die("Connection failed: " . $conn->connect_error); }
 ?>
