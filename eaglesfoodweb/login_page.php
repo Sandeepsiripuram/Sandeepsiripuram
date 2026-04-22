@@ -1,9 +1,11 @@
 <?php
 session_start();
-include "db.php"; // Ensure $conn is defined here
+include "db.php"; // Ensure $conn is initialized in this file
 
 // 1. HANDLE LOGIN LOGIC
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // We clear any previous output to ensure only JSON is sent
+    ob_clean(); 
     header('Content-Type: application/json');
     
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
@@ -14,17 +16,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    // Select all necessary columns for the session
+    // Select ALL columns needed for your session/dashboard
     $stmt = $conn->prepare("SELECT user_id, user_name, user_password, pastor_name, phone, upload_count FROM users WHERE email = ? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($user = $result->fetch_assoc()) {
-        // password_verify compares raw input with the $2y$... hash in DB
+        // Verify the hashed password
+        // Note: password_verify handles the salt automatically.
         if (password_verify($password, $user['user_password'])) {
             
-            // Store EVERYTHING the dashboard needs in the Session
+            // Regenerate session ID for security
+            session_regenerate_id(true);
+
+            // Store data in Session
             $_SESSION['loggedin']     = true;
             $_SESSION['user_id']      = $user['user_id'];
             $_SESSION['user_name']    = $user['user_name'];
@@ -63,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             text-align: center;
         }
-        .logo-box img { width: 80px; margin-bottom: 15px; border-radius: 50%; }
+        .logo-box img { width: 80px; height: 80px; margin-bottom: 15px; border-radius: 50%; object-fit: cover; }
         .form-group { text-align: left; margin-bottom: 20px; position: relative; }
         label { display: block; margin-bottom: 8px; font-weight: 600; color: #333; font-size: 0.9rem; }
         .input-icon { position: relative; }
@@ -126,7 +132,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             btn.innerText = "Verifying...";
             
             try {
-                // Fetch sends to the SAME file ('')
                 const res = await fetch('', { 
                     method: 'POST', 
                     body: new FormData(e.target) 
@@ -142,7 +147,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     btn.innerText = originalText;
                 }
             } catch (error) {
-                alert("Connection error. Please check your internet.");
+                console.error(error);
+                alert("An error occurred. Check the console for details.");
                 btn.disabled = false;
                 btn.innerText = originalText;
             }
